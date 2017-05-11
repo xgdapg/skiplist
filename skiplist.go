@@ -33,6 +33,10 @@ func New(f CompareFunc) *SkipList {
 	return l
 }
 
+func (l *SkipList) Len() int {
+	return l.len
+}
+
 func (l *SkipList) SetEqualFunc(f CompareFunc) *SkipList {
 	l.cmpEqual = f
 	return l
@@ -211,20 +215,14 @@ func randomLevel() int {
 
 //
 
-func (l *SkipList) Keys() []interface{} {
-	keys := []interface{}{}
-	for e := l.Front(); e != nil; e = e.Next() {
-		keys = append(keys, e.key)
-	}
-	return keys
-}
-
-//
-
 type Element struct {
 	key, Value interface{}
 	prev, next []*Element
 	list       *SkipList
+}
+
+func (e *Element) Key() interface{} {
+	return e.key
 }
 
 func (e *Element) Next() *Element {
