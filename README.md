@@ -26,8 +26,8 @@ func main() {
 	l.GetLast(4)
 	l.Remove(4)
 
-    d := skiplist.NewDebugger(l.SkipList)
-    fmt.Println(d.Keys())
+	d := skiplist.NewDebugger(l.SkipList)
+	fmt.Println(d.Keys())
 }
 ```
 
