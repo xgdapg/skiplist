@@ -104,7 +104,7 @@ func (h *Helper) GetAll(key interface{}) []*Element {
 	return h.GetRange(key, key)
 }
 
-func (h *Helper) KeyCnt(key interface{}) int {
+func (h *Helper) Count(key interface{}) int {
 	cnt := 0
 	h.list.RangeEach(key, key, func(e *Element) {
 		cnt++
