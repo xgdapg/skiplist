@@ -121,7 +121,7 @@ func (l *SkipList) GetLast(key interface{}) *Element {
 	return e
 }
 
-func (l *SkipList) RangeEach(from, to interface{}, fn func(*Element)) {
+func (l *SkipList) RangeEach(from, to interface{}, f func(*Element) bool) {
 	le, lpath := l.search(from, false)
 	if le == nil {
 		le = lpath[0]
@@ -143,8 +143,7 @@ func (l *SkipList) RangeEach(from, to interface{}, fn func(*Element)) {
 	}
 
 	for e := le; e != nil; e = e.Next() {
-		fn(e)
-		if e == re {
+		if !f(e) || e == re {
 			break
 		}
 	}
@@ -192,6 +191,14 @@ func (l *SkipList) Set(key, value interface{}) *Element {
 		return e
 	}
 	return l.insert(key, value, path)
+}
+
+func (l *SkipList) Remove(key interface{}) *Element {
+	e := l.Get(key)
+	if e != nil {
+		e.Remove()
+	}
+	return e
 }
 
 //

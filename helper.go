@@ -47,67 +47,69 @@ var OrderBy = orderBy{
 	},
 }
 
-type Helper struct {
+type Debugger struct {
 	list *SkipList
 }
 
-func NewHelper(l *SkipList) *Helper {
-	return &Helper{l}
+func NewDebugger(l *SkipList) *Debugger {
+	return &Debugger{l}
 }
 
-func (h *Helper) Keys() []interface{} {
-	return h.LevelKeys(0)
+func (d *Debugger) Keys() []interface{} {
+	return d.LevelKeys(0)
 }
 
-func (h *Helper) Levels() int {
-	return len(h.list.root.next)
+func (d *Debugger) Levels() int {
+	return len(d.list.root.next)
 }
 
-func (h *Helper) LevelKeys(lv int) []interface{} {
+func (d *Debugger) LevelKeys(lv int) []interface{} {
 	keys := []interface{}{}
-	if lv >= 0 && lv < h.Levels() {
-		for e := h.list.root.next[lv]; e != h.list.root; e = e.next[lv] {
+	if lv >= 0 && lv < d.Levels() {
+		for e := d.list.root.next[lv]; e != d.list.root; e = e.next[lv] {
 			keys = append(keys, e.key)
 		}
 	}
 	return keys
 }
 
-func (h *Helper) Remove(key interface{}) *Element {
-	e := h.list.Get(key)
-	if e != nil {
-		e.Remove()
-	}
-	return e
+type SkipListExt struct {
+	*SkipList
 }
 
-func (h *Helper) RemoveRange(from, to interface{}) {
-	list := h.GetRange(from, to)
+func NewExt(l *SkipList) *SkipListExt {
+	return &SkipListExt{l}
+}
+
+func (l *SkipListExt) RemoveRange(from, to interface{}) {
+	list := l.GetRange(from, to)
 	for _, e := range list {
 		e.Remove()
 	}
 }
 
-func (h *Helper) RemoveAll(key interface{}) {
-	h.RemoveRange(key, key)
+func (l *SkipListExt) RemoveAll(key interface{}) {
+	l.RemoveRange(key, key)
 }
 
-func (h *Helper) GetRange(from, to interface{}) []*Element {
+func (l *SkipListExt) GetRange(from, to interface{}) []*Element {
 	list := []*Element{}
-	h.list.RangeEach(from, to, func(e *Element) {
+	l.RangeEach(from, to, func(e *Element) bool {
 		list = append(list, e)
+		return true
 	})
 	return list
 }
 
-func (h *Helper) GetAll(key interface{}) []*Element {
-	return h.GetRange(key, key)
+func (l *SkipListExt) GetAll(key interface{}) []*Element {
+	return l.GetRange(key, key)
 }
 
-func (h *Helper) Count(key interface{}) int {
+func (l *SkipListExt) Count(key interface{}) int {
 	cnt := 0
-	h.list.RangeEach(key, key, func(e *Element) {
+	l.RangeEach(key, key, func(e *Element) bool {
 		cnt++
+		return true
 	})
 	return cnt
 }
