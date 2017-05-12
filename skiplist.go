@@ -50,13 +50,13 @@ func (l *SkipList) Back() *Element {
 	return l.root.Prev()
 }
 
-func (l *SkipList) search(key interface{}) (*Element, []*Element) {
+func (l *SkipList) search(key interface{}, fastreturn bool) (*Element, []*Element) {
 	lv := len(l.root.next) - 1
 	path := make([]*Element, lv+1)
 	e := l.root.next[lv]
 	for lv >= 0 {
 		if e != l.root {
-			if l.cmpEqual(key, e.key) {
+			if (fastreturn || lv == 0) && l.cmpEqual(key, e.key) {
 				for i := lv; i >= 0; i-- {
 					path[i] = e
 				}
@@ -78,13 +78,13 @@ func (l *SkipList) search(key interface{}) (*Element, []*Element) {
 	return nil, path
 }
 
-func (l *SkipList) revsearch(key interface{}) (*Element, []*Element) {
+func (l *SkipList) revsearch(key interface{}, fastreturn bool) (*Element, []*Element) {
 	lv := len(l.root.next) - 1
 	path := make([]*Element, lv+1)
 	e := l.root.prev[lv]
 	for lv >= 0 {
 		if e != l.root {
-			if l.cmpEqual(key, e.key) {
+			if (fastreturn || lv == 0) && l.cmpEqual(key, e.key) {
 				for i := lv; i >= 0; i-- {
 					path[i] = e
 				}
@@ -106,25 +106,23 @@ func (l *SkipList) revsearch(key interface{}) (*Element, []*Element) {
 	return nil, path
 }
 
-func (l *SkipList) Find(key interface{}) *Element {
-	e, _ := l.search(key)
+func (l *SkipList) Get(key interface{}) *Element {
+	e, _ := l.search(key, true)
 	return e
 }
 
-func (l *SkipList) FindFirst(key interface{}) *Element {
-	e, _ := l.search(key)
+func (l *SkipList) GetFirst(key interface{}) *Element {
+	e, _ := l.search(key, false)
 	return e
 }
 
-func (l *SkipList) FindLast(key interface{}) *Element {
-	e, _ := l.revsearch(key)
+func (l *SkipList) GetLast(key interface{}) *Element {
+	e, _ := l.revsearch(key, false)
 	return e
 }
 
-func (l *SkipList) Range(from, to interface{}) (list []*Element) {
-	list = []*Element{}
-
-	le, lpath := l.search(from)
+func (l *SkipList) RangeEach(from, to interface{}, fn func(*Element)) {
+	le, lpath := l.search(from, false)
 	if le == nil {
 		le = lpath[0]
 		if le == l.root {
@@ -132,7 +130,7 @@ func (l *SkipList) Range(from, to interface{}) (list []*Element) {
 		}
 	}
 
-	re, rpath := l.revsearch(to)
+	re, rpath := l.revsearch(to, false)
 	if re == nil {
 		re = rpath[0]
 		if re == l.root {
@@ -145,7 +143,7 @@ func (l *SkipList) Range(from, to interface{}) (list []*Element) {
 	}
 
 	for e := le; e != nil; e = e.Next() {
-		list = append(list, e)
+		fn(e)
 		if e == re {
 			break
 		}
@@ -182,13 +180,13 @@ func (l *SkipList) insert(key, value interface{}, path []*Element) *Element {
 	return e
 }
 
-func (l *SkipList) Insert(key, value interface{}) *Element {
-	_, path := l.revsearch(key)
+func (l *SkipList) Add(key, value interface{}) *Element {
+	_, path := l.revsearch(key, false)
 	return l.insert(key, value, path)
 }
 
-func (l *SkipList) Upsert(key, value interface{}) *Element {
-	e, path := l.revsearch(key)
+func (l *SkipList) Set(key, value interface{}) *Element {
+	e, path := l.revsearch(key, true)
 	if e != nil {
 		e.Value = value
 		return e

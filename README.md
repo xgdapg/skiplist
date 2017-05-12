@@ -19,14 +19,14 @@ import (
 func main() {
 	skiplist.P = 2
 	l := skiplist.New(skiplist.OrderBy.Int.Asc)
-	l.Insert(4, 1)
-	l.Insert(34, 2)
-	l.Insert(7, 3)
-	l.Insert(13, 4)
-	l.Insert(35, 5)
-	l.Insert(2, 6)
-	l.Insert(4, 7)
-	l.Upsert(4, 8)
+	l.Add(4, 1)
+	l.Add(34, 2)
+	l.Add(7, 3)
+	l.Add(13, 4)
+	l.Add(35, 5)
+	l.Add(2, 6)
+	l.Add(4, 7)
+	l.Set(4, 8)
 
 	h := skiplist.NewHelper(l)
 

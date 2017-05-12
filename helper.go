@@ -72,3 +72,42 @@ func (h *Helper) LevelKeys(lv int) []interface{} {
 	}
 	return keys
 }
+
+func (h *Helper) Remove(key interface{}) *Element {
+	e := h.list.Get(key)
+	if e != nil {
+		e.Remove()
+	}
+	return e
+}
+
+func (h *Helper) RemoveRange(from, to interface{}) {
+	list := h.GetRange(from, to)
+	for _, e := range list {
+		e.Remove()
+	}
+}
+
+func (h *Helper) RemoveAll(key interface{}) {
+	h.RemoveRange(key, key)
+}
+
+func (h *Helper) GetRange(from, to interface{}) []*Element {
+	list := []*Element{}
+	h.list.RangeEach(from, to, func(e *Element) {
+		list = append(list, e)
+	})
+	return list
+}
+
+func (h *Helper) GetAll(key interface{}) []*Element {
+	return h.GetRange(key, key)
+}
+
+func (h *Helper) KeyCnt(key interface{}) int {
+	cnt := 0
+	h.list.RangeEach(key, key, func(e *Element) {
+		cnt++
+	})
+	return cnt
+}
