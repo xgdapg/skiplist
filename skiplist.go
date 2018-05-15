@@ -79,7 +79,7 @@ func (l *SkipList) search(key interface{}, fastreturn bool) (*Element, []*Elemen
 }
 
 func (l *SkipList) revsearch(key interface{}, fastreturn bool) (*Element, []*Element) {
-	lv := len(l.root.next) - 1
+	lv := len(l.root.prev) - 1
 	path := make([]*Element, lv+1)
 	e := l.root.prev[lv]
 	for lv >= 0 {
@@ -267,7 +267,7 @@ func (e *Element) Remove() {
 	}
 	l := e.list
 	e.list = nil
-	for lv := len(l.root.next) - 1; lv >= 0; lv-- {
+	for lv := len(l.root.next) - 1; lv > 0; lv-- {
 		if l.root.next[lv] == l.root {
 			l.root.next = l.root.next[:lv]
 			l.root.prev = l.root.prev[:lv]
