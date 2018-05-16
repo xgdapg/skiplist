@@ -5,27 +5,22 @@ import (
 	"time"
 )
 
-type CompareFunc func(lhs, rhs interface{}) bool
-
 var MaxLevel = 32
 
-var defaultEqualFunc CompareFunc = func(lhs, rhs interface{}) bool {
-	return lhs == rhs
+type Score interface {
+	EqualTo(interface{}) bool
+	LessThan(interface{}) bool
 }
 
 type SkipList struct {
-	root     *Element
-	len      int
-	cmpOrder CompareFunc
-	cmpEqual CompareFunc
+	root *Element
+	len  int
 }
 
-func New(f CompareFunc) *SkipList {
+func New() *SkipList {
 	l := &SkipList{
-		root:     &Element{},
-		len:      0,
-		cmpOrder: f,
-		cmpEqual: defaultEqualFunc,
+		root: &Element{},
+		len:  0,
 	}
 	l.root.list = l
 	l.root.prev = []*Element{l.root}
@@ -37,11 +32,6 @@ func (l *SkipList) Len() int {
 	return l.len
 }
 
-func (l *SkipList) SetEqualFunc(f CompareFunc) *SkipList {
-	l.cmpEqual = f
-	return l
-}
-
 func (l *SkipList) Front() *Element {
 	return l.root.Next()
 }
@@ -50,19 +40,19 @@ func (l *SkipList) Back() *Element {
 	return l.root.Prev()
 }
 
-func (l *SkipList) search(key interface{}, fastreturn bool) (*Element, []*Element) {
+func (l *SkipList) search(score Score, fastreturn bool) (*Element, []*Element) {
 	lv := len(l.root.next) - 1
 	path := make([]*Element, lv+1)
 	e := l.root.next[lv]
 	for lv >= 0 {
 		if e != l.root {
-			if (fastreturn || lv == 0) && l.cmpEqual(key, e.key) {
+			if (fastreturn || lv == 0) && score.EqualTo(e.score) {
 				for i := lv; i >= 0; i-- {
 					path[i] = e
 				}
 				return e, path
 			}
-			if l.cmpOrder(e.key, key) {
+			if e.score.LessThan(score) {
 				e = e.next[lv]
 				continue
 			}
@@ -78,19 +68,19 @@ func (l *SkipList) search(key interface{}, fastreturn bool) (*Element, []*Elemen
 	return nil, path
 }
 
-func (l *SkipList) revsearch(key interface{}, fastreturn bool) (*Element, []*Element) {
+func (l *SkipList) revsearch(score Score, fastreturn bool) (*Element, []*Element) {
 	lv := len(l.root.prev) - 1
 	path := make([]*Element, lv+1)
 	e := l.root.prev[lv]
 	for lv >= 0 {
 		if e != l.root {
-			if (fastreturn || lv == 0) && l.cmpEqual(key, e.key) {
+			if (fastreturn || lv == 0) && score.EqualTo(e.score) {
 				for i := lv; i >= 0; i-- {
 					path[i] = e
 				}
 				return e, path
 			}
-			if l.cmpOrder(key, e.key) {
+			if score.LessThan(e.score) {
 				e = e.prev[lv]
 				continue
 			}
@@ -106,22 +96,22 @@ func (l *SkipList) revsearch(key interface{}, fastreturn bool) (*Element, []*Ele
 	return nil, path
 }
 
-func (l *SkipList) Get(key interface{}) *Element {
-	e, _ := l.search(key, true)
+func (l *SkipList) Get(score Score) *Element {
+	e, _ := l.search(score, true)
 	return e
 }
 
-func (l *SkipList) GetFirst(key interface{}) *Element {
-	e, _ := l.search(key, false)
+func (l *SkipList) GetFirst(score Score) *Element {
+	e, _ := l.search(score, false)
 	return e
 }
 
-func (l *SkipList) GetLast(key interface{}) *Element {
-	e, _ := l.revsearch(key, false)
+func (l *SkipList) GetLast(score Score) *Element {
+	e, _ := l.revsearch(score, false)
 	return e
 }
 
-func (l *SkipList) RangeEach(from, to interface{}, f func(*Element) bool) {
+func (l *SkipList) RangeEach(from, to Score, f func(*Element) bool) {
 	le, lpath := l.search(from, false)
 	if le == nil {
 		le = lpath[0]
@@ -138,7 +128,7 @@ func (l *SkipList) RangeEach(from, to interface{}, f func(*Element) bool) {
 		}
 	}
 
-	if !l.cmpEqual(le.key, re.key) && !l.cmpOrder(le.key, re.key) {
+	if !le.score.EqualTo(re.score) && !le.score.LessThan(re.score) {
 		return
 	}
 
@@ -150,10 +140,10 @@ func (l *SkipList) RangeEach(from, to interface{}, f func(*Element) bool) {
 	return
 }
 
-func (l *SkipList) insert(key, value interface{}, path []*Element) *Element {
+func (l *SkipList) insert(score Score, value interface{}, path []*Element) *Element {
 	e := &Element{
 		list:  l,
-		key:   key,
+		score: score,
 		Value: value,
 		prev:  []*Element{},
 		next:  []*Element{},
@@ -179,22 +169,22 @@ func (l *SkipList) insert(key, value interface{}, path []*Element) *Element {
 	return e
 }
 
-func (l *SkipList) Add(key, value interface{}) *Element {
-	_, path := l.revsearch(key, false)
-	return l.insert(key, value, path)
+func (l *SkipList) Add(score Score, value interface{}) *Element {
+	_, path := l.revsearch(score, false)
+	return l.insert(score, value, path)
 }
 
-func (l *SkipList) Set(key, value interface{}) *Element {
-	e, path := l.revsearch(key, true)
+func (l *SkipList) Set(score Score, value interface{}) *Element {
+	e, path := l.revsearch(score, true)
 	if e != nil {
 		e.Value = value
 		return e
 	}
-	return l.insert(key, value, path)
+	return l.insert(score, value, path)
 }
 
-func (l *SkipList) Remove(key interface{}) *Element {
-	e := l.Get(key)
+func (l *SkipList) Remove(score Score) *Element {
+	e := l.Get(score)
 	if e != nil {
 		e.Remove()
 	}
@@ -221,13 +211,14 @@ func randomLevel() int {
 //
 
 type Element struct {
-	key, Value interface{}
+	score      Score
+	Value      interface{}
 	prev, next []*Element
 	list       *SkipList
 }
 
-func (e *Element) Key() interface{} {
-	return e.key
+func (e *Element) Score() Score {
+	return e.score
 }
 
 func (e *Element) Next() *Element {

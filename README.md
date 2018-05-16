@@ -18,16 +18,33 @@ import (
 
 func main() {
 	skiplist.P = 2
-	l := skiplist.New(skiplist.OrderBy.Int.Asc)
-	l.Set(4, 1)
-	l.Get(4)
-	l.Add(4, 2)
-	l.GetFirst(4)
-	l.GetLast(4)
-	l.Remove(4)
+	l := skiplist.New()
+	d := skiplist.NewDebugger(l)
 
-	d := skiplist.NewDebugger(l.SkipList)
-	fmt.Println(d.Keys())
+	ids := []int{73, 84, 2, 23, 79, 50, 12, 89, 23}
+	for _, id := range ids {
+		l.Add(Id(id), id)
+	}
+
+	for i := 0; i < d.Levels(); i++ {
+		fmt.Println(d.LevelScores(i))
+	}
+}
+
+type Id int
+
+func (a Id) EqualTo(v interface{}) bool {
+	if b, ok := v.(Id); ok {
+		return a == b
+	}
+	panic("unexpected type")
+}
+
+func (a Id) LessThan(v interface{}) bool {
+	if b, ok := v.(Id); ok {
+		return a < b
+	}
+	panic("unexpected type")
 }
 ```
 
